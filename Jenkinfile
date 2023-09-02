@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                retry(3){
+                    git branch: "main", url: "https://github.com/Prateekachar01/Upgrad-Nodeapp.git", credentialsId: 'github-071'
+                }
+            }
+        }
+        
+        stage('Build Docker image and push to ECR') {
+            steps {
+                sh 'docker build -t ecr-555 .'
+                sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 390766696249.dkr.ecr.us-east-1.amazonaws.com/ecr071'
+                sh 'docker tag 390766696249.dkr.ecr.us-east-1.amazonaws.com/ecr071:latest'
+                sh 'docker push 390766696249.dkr.ecr.us-east-1.amazonaws.com/ecr071:latest'
+            }
+        }
+
+        stage('Deploy to App Host') {
+            steps {
+                sh '''ssh -i ~/.ssh/app root@10.10.4.240 <<EOF
+                aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 390766696249.dkr.ecr.us-east-1.amazonaws.com/ecr071
+                docker pull 390766696249.dkr.ecr.us-east-1.amazonaws.com/ecr071:latest
+                docker stop app-host-071 || true
+                docker rm app-host-071 || true
+                docker run -d -p 8080:8081 --name app-host-071 390766696249.dkr.ecr.us-east-1.amazonaws.com/ecr071:latest
+EOF
+            '''
+            }
+        }
+    }
+}
