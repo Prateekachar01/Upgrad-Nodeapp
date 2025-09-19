@@ -21,7 +21,7 @@ pipeline {
 
         stage('Deploy to App Host') {
             steps {
-                sh '''ssh -i ~/.ssh/app root@10.10.4.240 <<EOF
+                sh '''ssh -i ~/.ssh/app root@10.10.14.247 <<EOF
                 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 390766696249.dkr.ecr.us-east-1.amazonaws.com/ecr071
                 docker pull 390766696249.dkr.ecr.us-east-1.amazonaws.com/ecr071:latest
                 docker stop app-host-071 || true
